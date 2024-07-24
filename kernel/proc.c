@@ -164,6 +164,8 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+
+  p->trace_mask = 0;	//for trace
 }
 
 // Create a user page table for a given process,
@@ -278,16 +280,21 @@ fork(void)
 
   // Allocate process.
   if((np = allocproc()) == 0){
-    return -1;
-  }
-
+	return -1;
+  	//return -3;
+  }  
+  
   // Copy user memory from parent to child.
   if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
     freeproc(np);
     release(&np->lock);
-    return -1;
+	return -1;
+	//return -4;
   }
   np->sz = p->sz;
+  
+  //Copy trace_mask from parent to child
+  np->trace_mask = p->trace_mask;
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
@@ -653,4 +660,19 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+uint64
+available_proc()
+{
+  uint64 cnt = 0;
+  struct proc *p;
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+    if(p->state != UNUSED){
+      cnt++;
+    }
+    release(&p->lock);
+  }
+  return cnt;
 }

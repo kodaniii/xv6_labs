@@ -6,6 +6,10 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
+
+uint64 available_mem();
+uint64 available_proc();
 
 uint64
 sys_exit(void)
@@ -94,4 +98,59 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+//Add sys_trace() function in kernel/sysproc.c
+/*
+trace 32 grep hello README
+p->trace_mask <- 32
+*/
+uint64
+sys_trace(void)
+{
+  //TODO trace
+
+  /*
+  //NEW VERSION
+  struct proc *p = myproc();
+  p->trace_mask = p->trapframe->a0;
+  printf("sys_trace() = %d\n", p->trace_mask);
+  return 0;*/
+
+  //VERSION 2
+  //argint(0, &(myproc()->trace_mask));
+  //return 0;
+  
+  int n;  //mask
+  if(argint(0, &n) < 0){
+      return -1;
+  }
+  //printf("sys_trace(): n = %d\n", n);
+  
+  struct proc *p = myproc();
+  //printf("sys_trace(): pid = %d\n", p->pid);
+  p->trace_mask = n;	//p->trapframe->a0
+  
+  return 0;
+}
+
+uint64
+sys_sysinfo(void)
+{
+  //TODO sysinfo
+  struct proc *p = myproc();
+  struct sysinfo s_info;
+  uint64 addr;
+  if(argaddr(0, &addr) < 0){
+    return -1;
+  }
+  
+  s_info.freemem = available_mem();
+  s_info.nproc = available_proc();
+
+  if(copyout(p->pagetable, addr, (char*)&s_info, sizeof(s_info)) < 0){
+    return -1;
+  }
+  //printf("sys_sysinfo()\n");
+  return 0;
 }
