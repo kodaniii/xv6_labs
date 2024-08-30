@@ -75,12 +75,39 @@ sys_sleep(void)
   return 0;
 }
 
-
 #ifdef LAB_PGTBL
+extern pte_t * walk(pagetable_t, uint64, int);
 int
 sys_pgaccess(void)
 {
   // lab pgtbl: your code here.
+  uint64 bit_mask = 0;
+  
+  uint64 start_va;
+  int pages_num;
+  uint64 abits;
+  
+  if(argaddr(0, &start_va) < 0) return -1;
+  if(argint(1, &pages_num) < 0) return -1;
+  if(argaddr(2, &abits) < 0) return -1;
+
+  //check pages num
+  if(pages_num > 32) return -1;
+
+  pte_t *pte;
+  for(int i = 0; i < pages_num; start_va += PGSIZE, i++){
+    if((pte = walk(myproc()->pagetable, start_va, 0)) == 0){  //alloc=0
+      panic("sys_pgaccess");
+    }
+    if(*pte & PTE_A){
+      bit_mask |= 1 << i;   //bitmask update
+      *pte &= ~PTE_A;       //pte remove PTE_A
+    }
+  }
+
+  copyout(myproc()->pagetable, abits, 
+            (char*)&bit_mask, sizeof(bit_mask));
+
   return 0;
 }
 #endif
