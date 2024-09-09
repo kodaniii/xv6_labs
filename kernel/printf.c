@@ -132,3 +132,17 @@ printfinit(void)
   initlock(&pr.lock, "pr");
   pr.locking = 1;
 }
+
+void
+backtrace(void) {
+  printf("backtrace: \n");
+  
+  //current frame pointer
+  uint64 fp = r_fp();
+  while(PGROUNDDOWN(fp) != fp) {
+    //find the return address
+    printf("%p\n", *(uint64*)(fp - 8));
+    //frame offset -16
+    fp = *(uint64*)(fp - 16);
+  }
+}
