@@ -65,7 +65,43 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((which_dev = devintr()) != 0){
+  }else if(r_scause() == 13 || r_scause() == 15){ //copy-on-write, 13 cannot read, 15 cannot write
+    pte_t *pte;
+    uint64 fail_addr = r_stval();
+    fail_addr = PGROUNDDOWN(fail_addr);
+    char *new_pa;
+
+    if((cowcheck(p->pagetable, fail_addr)) == 0){
+      //exception, kill
+      p->killed = 1;
+    }
+    else{
+      pte = walk(p->pagetable, fail_addr, 0);
+      uint64 old_pa = PTE2PA(*pte);
+      
+      //ref is 1, local modify
+      if((get_ref_count((void*)old_pa)) == 1){
+        *pte |= PTE_W;
+        *pte &= ~PTE_COW;
+      }
+      else{
+        //kalloc a new page
+        if((new_pa = kalloc()) == 0){
+          p->killed = 1;
+        }
+        else
+        {
+          memmove(new_pa, (char*)old_pa, PGSIZE);
+          uint flags = PTE_FLAGS(*pte);
+          uint64 new_pte = PA2PTE(new_pa);
+          *pte = new_pte | flags;
+          *pte |= PTE_W;
+          *pte &= (~PTE_COW);
+          kfree((void*)old_pa);
+        }
+      }
+    }
+  }else if((which_dev = devintr()) != 0){
     // ok
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
