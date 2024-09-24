@@ -106,7 +106,6 @@ main(int argc, char *argv[])
   void *value;
   double t1, t0;
 
-
   if (argc < 2) {
     fprintf(stderr, "Usage: %s nthreads\n", argv[0]);
     exit(-1);

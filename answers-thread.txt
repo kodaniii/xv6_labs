@@ -1,0 +1,19 @@
+root@6-s081:~/xv6-labs-2021# ./ph 2
+100000 puts, 4.557 seconds, 21944 puts/second
+0: 0 keys missing
+1: 0 keys missing
+200000 gets, 10.043 seconds, 19915 gets/second
+root@6-s081:~/xv6-labs-2021# ./ph 1
+100000 puts, 8.263 seconds, 12102 puts/second
+0: 0 keys missing
+100000 gets, 8.278 seconds, 12081 gets/second
+root@6-s081:~/xv6-labs-2021# ./ph 2
+100000 puts, 4.648 seconds, 21517 puts/second
+1: 0 keys missing
+0: 0 keys missing
+200000 gets, 9.987 seconds, 20027 gets/second
+root@6-s081:~/xv6-labs-2021# ./ph 1
+100000 puts, 10.122 seconds, 9879 puts/second
+0: 0 keys missing
+100000 gets, 12.049 seconds, 8300 gets/second
+
