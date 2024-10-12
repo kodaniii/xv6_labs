@@ -25,12 +25,17 @@ struct kmem{
 
 struct kmem kmems[NCPU];
 
+struct steal{
+  struct spinlock lock;
+}stl;
+
 void
 kinit()
 {
   for(int i = 0; i < NCPU; i++) {
     initlock(&kmems[i].lock, "kmem");
   }
+  initlock(&stl.lock, "stl");
   freerange(end, (void*)PHYSTOP);
 }
 
@@ -94,16 +99,19 @@ kalloc(void)
     //TODO steal
     for(int stl_id = 0; stl_id < NCPU; stl_id++){
       if(cpu_id == stl_id) continue;
+      acquire(&stl.lock);
       acquire(&kmems[stl_id].lock);
       r = kmems[stl_id].freelist;
       
       if(r) {
         kmems[stl_id].freelist = r->next;
         release(&kmems[stl_id].lock);
+        release(&stl.lock);
         break;
       }
       //if kmems[stl_id] is empty, continue
       release(&kmems[stl_id].lock);
+      release(&stl.lock);
     }
   }
 
